@@ -3,11 +3,16 @@
 # @Author  : mingming.xu
 # @Email   : mingming.xu@zhaopin.com
 # @File    : parse_docx.py
-from parser4document.docx import DocParser
+from parser4document.docx import DocXParser
 
 doc_path = '../docs/彭于晏.docx'
-parser = DocParser(doc_path)
+parser = DocXParser(doc_path)
 doc = parser.read()
+print('doc: ', doc)
+
+textbox = parser.extract_textbox()
+print('textbox: ', textbox)
+
 with open(doc_path.replace('.docx', '.txt'), 'w', encoding='utf8') as f:
     for content in doc:
         t = content['type']

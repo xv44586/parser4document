@@ -187,3 +187,31 @@ class DocXParser(object):
         if show:
             self.show_bytes(blobs)
         return blobs
+
+    def extract_textbox(self):
+        """
+        直接从xml里的tag里抽取textbox 中内容
+        """
+        children = self.document.element.body.iter()
+        child_iters = []
+        tags = []
+        for child in children:
+            # 通过类型判断目录
+            if child.tag.endswith(('AlternateContent', 'textbox')):
+                for ci in child.iter():
+
+                    tags.append(ci.tag)
+                    if ci.tag.endswith(('main}r', 'main}pPr')):
+                        child_iters.append(ci)
+        text = ['']
+        for ci in child_iters:
+            if ci.tag.endswith('main}pPr'):
+                text.append('')
+            else:
+                text[-1] += ci.text
+            ci.text = ''
+
+        if len(text)<2 and text[0] == '':
+            return None
+
+        return text
