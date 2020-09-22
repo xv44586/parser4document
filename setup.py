@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='parser4document',
-    version='0.0.1',
+    version='0.0.3',
     description='an toolkit for parse doc/docx/pdf document',
     long_description='toolkit4nlp: https://github.com/xv44586/parser4document',
     license='Apache License 2.0',
