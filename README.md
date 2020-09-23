@@ -28,3 +28,7 @@ antiword path-to-doc > path-to-docx
 ```
 # docx文件
 .docx文件的解析使用<a href='https://python-docx.readthedocs.io/en/latest/'>python-docx</a>,他可以帮助我们提取段落、表格、附件等内容。
+
+# pdf文件
+pdf文件解析使用<a href='https://github.com/jsvine/pdfplumber'>pdfplumber</a>,他底层使用<a href='https://github.com/pdfminer/pdfminer.six'>pdfminer.six</a>,
+在此之上，增加了对表格内容的组织，所以除了读取内容外，针对表格还可以返回其结构化结果。

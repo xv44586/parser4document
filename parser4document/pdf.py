@@ -4,7 +4,9 @@
 # @Email   : mingming.xu@zhaopin.com
 # @File    : pdf.py
 """
+使用pdfplumber 按页（page）读取pdf内容：对text 内容区分table 内与 table 外，对图片格式，直接返回其bytes
 
+[pdfplumber](https://github.com/jsvine/pdfplumber)
 """
 
 import pdfplumber
