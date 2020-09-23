@@ -146,7 +146,7 @@ class DocXParser(object):
             elif isinstance(child, CT_Tbl):  # 属于w:tb1
                 yield Table(child, parent)  # 生成器生成表格代理【标记这个块是表格】
 
-    def read(self, with_textbox=False, verbos=False):
+    def read(self, with_textbox=False, verbose=False):
         """
         textbox 不在基本API下，而是通过直接从xml里寻找tag 抽取，所以需要额外指定
         """
@@ -156,14 +156,14 @@ class DocXParser(object):
             if isinstance(block, Paragraph):
                 runs = self.parse_paragraph(block)
                 blocks.append({'type': 'text', 'content': block.text, 'runs': runs})
-                if verbos:
+                if verbose:
                     print(block.text)  # 是段落
 
             elif isinstance(block, Table):
                 table_text = self.read_table(block)
                 blocks.append({'type': 'table', 'content': table_text})
                 text = '\n\n'.join(['\t'.join([c['text'] for c in l]) for l in table_text])
-                if verbos:
+                if verbose:
                     print(text)  # 是表格
 
         # extract textbox
