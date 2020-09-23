@@ -20,10 +20,12 @@ class PDFParser(object):
         self.pdf = pdfplumber.open(pdf_path)
         self.tabel_settings = {
             "vertical_strategy": 'lines',
-            "horizontal_strategy": 'lines'
+            "horizontal_strategy": 'lines',
+            "snap_tolerance": 10,
             # "explicit_vertical_lines": self.curves_to_edges(p.curves + p.edges),
             # "explicit_horizontal_lines": self.curves_to_edges(p.curves + p.edges),
             # "intersection_y_tolerance": 10,
+
         }
 
     def curves_to_edges(self, cs):
