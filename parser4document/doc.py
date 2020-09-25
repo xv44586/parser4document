@@ -10,6 +10,8 @@ import platform
 import os
 
 from .docx import DocXParser
+from .utils import format
+
 
 is_windows = False
 if platform.system() == 'Windows':
@@ -18,21 +20,65 @@ if platform.system() == 'Windows':
 if is_windows:
     import win32com.client
 
+else:
+    import subprocess
+    import errno
+
 
 class DocParser(DocXParser):
     def __init__(self, word_path, is_windows=is_windows):
         self.doc_path = word_path
         self.is_windows = is_windows
-        word_path = self.doc2docx(word_path)
-        super(DocParser, self).__init__(word_path)
+        self.word_path = None
 
-    def doc2docx(self, path):
-        if is_windows:
-            return self.doc2docx_windows(path)
-        return self.doc2docx_linux(path)
+    def read(self, with_textbox=False, verbose=False):
+        if self.is_windows:
+            new_path = self.doc2docx_windows(self.doc_path)
+            self.word_path = new_path
+            return super(DocParser, self).read(with_textbox, verbose)
+        else:
+            # use antiword to parse doc
+            text = self.doc2docx_linux(self.doc_path)
+            self.word_path = self.doc_path
+            text = format(text.decode())
+            if verbose:
+                print('text: ', text)
 
-    @staticmethod
-    def doc2docx_windows(path, remove=False):
+            return [{'type': 'text', 'content': text, 'runs': []}]
+
+    def run(self, args):
+        """Run ``command`` and return the subsequent ``stdout`` and ``stderr``
+        as a tuple. If the command is not successful, this raises a
+        :exc:`textract.exceptions.ShellError`.
+        """
+
+        # run a subprocess and put the stdout and stderr on the pipe object
+        try:
+            pipe = subprocess.Popen(
+                args,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                # File not found.
+                # This is equivalent to getting exitcode 127 from sh
+                raise Exception(
+                    ' '.join(args), 127, '', '',
+                )
+
+        # pipe.wait() ends up hanging on large files. using
+        # pipe.communicate appears to avoid this issue
+        stdout, stderr = pipe.communicate()
+
+        # if pipe is busted, raise an error (unlike Fabric)
+        if pipe.returncode != 0:
+            raise Exception(
+                ' '.join(args), pipe.returncode, stdout, stderr,
+            )
+
+        return stdout, stderr
+
+    def doc2docx_windows(self, path, remove=False):
         w = win32com.client.Dispatch('Word.Application')
         w.Visible = 0
         w.DisplayAlerts = 0
@@ -45,12 +91,6 @@ class DocParser(DocXParser):
             os.remove(path)
         return newpath
 
-    @staticmethod
-    def doc2docx_linux(path, remove=False):
-        new_path = path.replace('.doc', '.docx')
-        cmd = 'antiword {} > {}'.format(path, new_path)
-        os.system(cmd)
-        if remove:
-            cmd = 'rm -v {}'.format(path)
-            os.system(cmd)
-        return new_path
+    def doc2docx_linux(self, path, remove=False):
+        stdout, _ = self.run(['antiword', path])
+        return stdout

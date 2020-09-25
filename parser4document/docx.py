@@ -152,6 +152,8 @@ class DocXParser(object):
         """
         textbox 不在基本API下，而是通过直接从xml里寻找tag 抽取，所以需要额外指定
         """
+        if not hasattr(self, 'document'):
+            self.document = docx.Document(self.word_path)
         blocks = []
         for block in self.iter_block_items(self.document):
             # 对应的打印输出
