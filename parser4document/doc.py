@@ -51,6 +51,6 @@ class DocParser(DocXParser):
         cmd = 'antiword {} > {}'.format(path, new_path)
         os.system(cmd)
         if remove:
-            cmd = 'rm -i {}'.format(path)
+            cmd = 'rm -v {}'.format(path)
             os.system(cmd)
         return new_path
