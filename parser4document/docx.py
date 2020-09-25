@@ -20,6 +20,8 @@ from docx.table import _Cell, Table
 # Paragraph : Proxy object wrapping ``<w:p>`` element.
 from docx.text.paragraph import Paragraph
 
+from .utils import format
+
 
 class DocXParser(object):
     """
@@ -44,7 +46,7 @@ class DocXParser(object):
 
         for run in runs:
             parse_run = {
-                'text': run.text,
+                'text': format(run.text),
                 'bold': run.bold,
                 'underline': run.underline,
                 'italic': run.italic,
@@ -155,9 +157,10 @@ class DocXParser(object):
             # 对应的打印输出
             if isinstance(block, Paragraph):
                 runs = self.parse_paragraph(block)
-                blocks.append({'type': 'text', 'content': block.text, 'runs': runs})
+                content = format(block.text)
+                blocks.append({'type': 'text', 'content': content, 'runs': runs})
                 if verbose:
-                    print(block.text)  # 是段落
+                    print(content)  # 是段落
 
             elif isinstance(block, Table):
                 table_text = self.read_table(block)
@@ -219,7 +222,7 @@ class DocXParser(object):
                 text[-1] += ci.text
             ci.text = ''
 
-        if len(text)<2 and text[0] == '':
+        if len(text) < 2 and text[0] == '':
             return None
 
-        return text
+        return format(text)

@@ -3,9 +3,14 @@
 # @Author  : mingming.xu
 # @Email   : mingming.xu@zhaopin.com
 # @File    : parse_docx.py
+import os
+
 from parser4document.docx import DocXParser
 
-doc_path = '../docs/彭于晏.docx'
+cur_path = os.path.abspath(os.path.dirname(__file__))
+parent_dir = os.path.abspath(os.path.dirname(cur_path))
+docx_name = '彭于晏.docx'
+doc_path = os.path.join(parent_dir, 'docs', docx_name)
 parser = DocXParser(doc_path)
 doc = parser.read()
 print('doc: ', doc)

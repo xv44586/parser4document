@@ -20,3 +20,18 @@ def Q2B(uchar):
 def stringQ2B(ustring):
     """字符串全角转半角"""
     return ''.join(Q2B(uchar) for uchar in ustring)
+
+
+def format(text):
+    """格式化文本"""
+    if type(text) != list:
+        text = [text]
+
+    format_text = []
+    for t in text:
+        b_text = stringQ2B(t)
+        format_text.append(b_text)
+
+    if len(format_text) < 2:
+        return format_text[0]
+    return format_text

@@ -13,6 +13,8 @@ import pdfplumber
 from PIL import Image
 from io import BytesIO
 
+from .utils import format
+
 
 class PDFParser(object):
     def __init__(self, pdf_path):
@@ -42,7 +44,7 @@ class PDFParser(object):
 
         table = page.extract_table(table_settings=self.tabel_settings)
         for row in table:
-            text.append([cell.replace('\n', '') for cell in row if cell])
+            text.append([format(cell).replace('\n', '') for cell in row if cell])
 
         return text
 
@@ -72,10 +74,10 @@ class PDFParser(object):
             return not any(obj_in_bbox(__bbox) for __bbox in bboxes)
 
         if without_table:
-            return page.filter(not_within_bboxes).extract_text()
+            text = page.filter(not_within_bboxes).extract_text()
+            return format(text)
         else:
-            return page.extract_text()
-
+            return format(page.extract_text())
 
     def read_img(self, page, show=False):
         if type(page) == int:
