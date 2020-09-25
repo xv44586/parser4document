@@ -16,7 +16,7 @@ if platform.system() == 'Windows':
     is_windows = True
 
 if is_windows:
-    import win32com
+    import win32com.client
 
 
 class DocParser(DocXParser):
@@ -32,7 +32,7 @@ class DocParser(DocXParser):
         return self.doc2docx_linux(path)
 
     @staticmethod
-    def doc2docx_windows(path):
+    def doc2docx_windows(path, remove=False):
         w = win32com.client.Dispatch('Word.Application')
         w.Visible = 0
         w.DisplayAlerts = 0
@@ -41,12 +41,16 @@ class DocParser(DocXParser):
         doc.SaveAs(newpath, 12, False, "", True, "", False, False, False, False)
         doc.Close()
         w.Quit()
-        os.remove(path)
+        if remove:
+            os.remove(path)
         return newpath
 
     @staticmethod
-    def doc2docx_linux(path):
+    def doc2docx_linux(path, remove=False):
         new_path = path.replace('.doc', '.docx')
         cmd = 'antiword {} > {}'.format(path, new_path)
         os.system(cmd)
+        if remove:
+            cmd = 'rm -i {}'.format(path)
+            os.system(cmd)
         return new_path
