@@ -205,6 +205,9 @@ class DocXParser(object):
         """
         直接从xml里的tag里抽取textbox 中内容
         """
+        if not hasattr(self, 'document'):
+            return ''
+
         children = self.document.element.body.iter()
         child_iters = []
         tags = []
