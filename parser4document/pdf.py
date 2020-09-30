@@ -12,6 +12,10 @@
 import pdfplumber
 from PIL import Image
 from io import BytesIO
+import base64
+import os
+import re
+from collections import defaultdict
 
 from .utils import format
 
@@ -79,24 +83,6 @@ class PDFParser(object):
         else:
             return format(page.extract_text())
 
-    def read_img(self, page, show=False):
-        if type(page) == int:
-            page = self.pdf.pages[page]
-
-        images = page.images
-        img_bytes = []
-        if len(images) > 0:
-            for image in images:
-                img_stream = image['stream']
-                bytes = img_stream.get_data()
-                img_bytes.append(bytes)
-
-        if show:
-            for ib in img_bytes:
-                show_bytes(ib)
-
-        return img_bytes
-
     def read(self, with_img=True, verbose=True):
         content = []
         img = None
@@ -114,7 +100,7 @@ class PDFParser(object):
                 print('table: ')
                 print('\n'.join([' '.join(row) for row in table_content]))
             if with_img:
-                img = self.read_img(page, verbose)
+                img = self.read_img(page, save2disk=True, verbose=verbose)
 
             content.append({
                 'text': text,
@@ -123,6 +109,114 @@ class PDFParser(object):
             })
 
         return content
+
+    def _get_image_name(self, name, verbose=False):
+        """如果已存在同名文件，则增加后缀直到为合法文件名"""
+        path = os.path.dirname(self.pdf_path)
+        safe_name = os.path.join(path, name)
+        if not os.path.exists(safe_name):
+            return safe_name
+        else:
+            idx = 0
+            name_parts = name.split('.')
+            if len(name_parts) == 1:
+                name_parts.append('.png')
+                if verbose:
+                    print('warning: image name "{}" not has suffix!'.format(name))
+            flag = True
+            name_pre, name_suffix = name_parts
+            while flag:
+                new_name = name_pre + '-%d' % idx + name_suffix
+                if os.path.exists(os.path.join(path, new_name)):
+                    idx += 1
+                else:
+                    flag = False
+
+            return os.path.join(path, new_name)
+
+    def read_img(self, page, save2disk=False, verbose=False):
+        """抽取当前page内的图片，并转为base64编码后的结果
+        """
+        img_str = []
+        for img in page.images:
+            name = img['name']
+            img_stream = img['stream']
+            img_bytes = img_stream.get_data()
+            b64_str = base64.b64encode(img_bytes)
+            img_str.append(b64_str)
+            if save2disk:
+                img = Image.open(BytesIO(img_bytes))
+                img_name = self._get_image_name(name, verbose)
+                img.save(img_name, format='png')
+            if verbose:
+                show_bytes(img_bytes)
+
+        return img_str
+
+    def cut_page_text(self, page):
+        """利用title 关键字切分内容，其中  'o' 是未知type"""
+        title = {'education': ['教育背景', '教育经历'],
+                 'awards': ['获奖情况', ],
+                 'self-assessment': ['个人评价', ],
+                 'info': ['个人信息', '个人总结'],
+                 'work_exp': ['项目经历', '项目经验'],
+                 'company_exp': ['工作经验'],
+                 'skills': ['职业技能', '专业技能']}
+
+        def has_title(text):
+            pat = '|'.join(['|'.join(v) for v in title.values()])
+            return list(re.finditer(pat, text))
+
+        def is_title(text):
+            ts = []
+            for v in title.keys():
+                ts.expand(v)
+            return text.strip().replace(' ', '') in ts
+
+        def drop_none_text(text):
+            """非字符，如空格，\n, \t等"""
+            return re.sub(r"[ \t\n]+", "", text)
+
+        def get_normalize_title(title_text):
+            """返回标准title"""
+            titles = {}
+            for _, v in title.items():
+                for t in v:
+                    titles[t] = v[0]
+
+            return titles[title_text]
+
+        text = page.extract_text()
+        #     text = re.split('\n[ ]{0,10}\n', text)
+        if type(text) != list:
+            text = [text]
+        coll = defaultdict(list)
+        for seg in text:
+            t_span = has_title(text)
+            if not t_span:
+                coll['o'].append(seg)
+            else:
+                last_title_start, last_title_end = 0, 0
+                # 得到多个titlespan
+                for ts in t_span:
+
+                    title_start, title_end = ts.span()
+                    if last_title_start < last_title_end:
+                        t = get_normalize_title(seg[last_title_start: last_title_end])
+                        coll[t].append(seg[last_title_end: title_start])
+                    else:
+                        coll['o'].append(seg[last_title_end: title_start])
+
+                    last_title_start, last_title_end = title_start, title_end
+
+                # 收尾
+                if last_title_start < last_title_end:
+                    t = get_normalize_title(seg[last_title_start: last_title_end])
+                    coll[t].append(seg[last_title_end:])
+                else:
+                    coll['o'].append(seg[last_title_end:])
+
+        return coll
 
 
 def show_bytes(bytes_blob):
