@@ -50,11 +50,11 @@ class DocXParser(object):
                 'bold': run.bold,
                 'underline': run.underline,
                 'italic': run.italic,
-                'highlight_color': run.font.highlight_color,
-                'strike': run.font.strike,
-                'double_strike': run.font.double_strike,
-                'outline': run.font.outline,
-                'shadow': run.font.shadow,
+                # 'highlight_color': run.font.highlight_color if run.font else None,
+                'strike': run.font.strike if run.font else None,
+                'double_strike': run.font.double_strike if run.font else None,
+                'outline': run.font.outline if run.font else None,
+                'shadow': run.font.shadow if run.font else None,
                 'font_name': run.font.name if run.font else None,
                 'font_size': run.font.size.pt if run.font.size else None
             }
