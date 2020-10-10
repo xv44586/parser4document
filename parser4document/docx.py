@@ -102,12 +102,11 @@ class DocXParser(object):
         :return:
         """
         table = [[self.parse_cell(cell) for cell in row.cells] for row in table.rows]
-        cell_len = len(table[0])
-        row_len = len(table)
 
         table = list(reversed([list(reversed(row)) for row in table]))
         new_table = []
         for row_idx, row in enumerate(table):
+            cell_len = len(row)
             new_row = []
             for cell_idx, cell in enumerate(row):
                 # 与上一行内容相同
